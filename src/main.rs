@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::env;
 use std::path::Path;
 
 /// Bulk rename all files recursively with a string substitution.
@@ -6,8 +7,8 @@ use std::path::Path;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Root directory
-    #[arg(short, long)]
-    root_dir: String,
+    #[arg(short, long, required = false)]
+    root_dir: Option<String>,
 
     /// Original pattern
     #[arg(short, long)]
@@ -24,7 +25,12 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-    let p = Path::new(&args.root_dir);
+    let path_name = &args.root_dir.map_or(
+        env::current_dir().expect("Unable to determine current working directory"),
+        |p| p.into(),
+    );
+
+    let p = Path::new(path_name);
 
     let operation = if args.dry_run {
         bulk_renamer::Operation::DryRun
